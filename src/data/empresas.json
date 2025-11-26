@@ -1,0 +1,140 @@
+﻿[
+  {
+    "_id": "b1",
+    "name": "Barbearia do João",
+    "description": "Cortes, barba e estilo. Atendimento confortável e profissional.",
+    "phone": "(71) 99999-0000",
+    "services": [
+      { "_id": "s1", "title": "Corte Masculino", "duration": 45, "price": 50 },
+      { "_id": "s2", "title": "Barba", "duration": 30, "price": 30 },
+      { "_id": "s5", "title": "Corte + Barba", "duration": 60, "price": 70 }
+    ]
+  },
+  {
+    "_id": "b2",
+    "name": "Studio Beleza",
+    "description": "Manicure, pedicure e estética.",
+    "phone": "(71) 98888-1111",
+    "services": [
+      { "_id": "s3", "title": "Manicure", "duration": 40, "price": 35 },
+      {
+        "_id": "s4",
+        "title": "Design de Sobrancelha",
+        "duration": 30,
+        "price": 40
+      },
+      { "_id": "s6", "title": "Pedicure", "duration": 50, "price": 45 }
+    ]
+  },
+  {
+    "_id": "b3",
+    "name": "Academia FitZone",
+    "description": "Musculação, crossfit e personal training.",
+    "phone": "(71) 97777-2222",
+    "services": [
+      {
+        "_id": "s7",
+        "title": "Sessão Personal Training",
+        "duration": 60,
+        "price": 120
+      },
+      { "_id": "s8", "title": "Aula de Crossfit", "duration": 50, "price": 80 },
+      { "_id": "s9", "title": "Avaliação Física", "duration": 40, "price": 100 }
+    ]
+  },
+  {
+    "_id": "b4",
+    "name": "Salão de Beleza Glamour",
+    "description": "Cabelos, procedimentos estéticos e tratamentos.",
+    "phone": "(71) 96666-3333",
+    "services": [
+      {
+        "_id": "s10",
+        "title": "Escova Progressiva",
+        "duration": 120,
+        "price": 150
+      },
+      { "_id": "s11", "title": "Coloração", "duration": 90, "price": 120 },
+      {
+        "_id": "s12",
+        "title": "Hidratação Profunda",
+        "duration": 60,
+        "price": 80
+      }
+    ]
+  },
+  {
+    "_id": "b5",
+    "name": "Clínica Odontológica Smile",
+    "description": "Limpeza, clareamento e tratamentos dentários.",
+    "phone": "(71) 95555-4444",
+    "services": [
+      {
+        "_id": "s13",
+        "title": "Limpeza Profissional",
+        "duration": 50,
+        "price": 150
+      },
+      {
+        "_id": "s14",
+        "title": "Clareamento Dental",
+        "duration": 60,
+        "price": 300
+      },
+      { "_id": "s15", "title": "Restauração", "duration": 45, "price": 200 }
+    ]
+  },
+  {
+    "_id": "b6",
+    "name": "Studio de Yoga Zen",
+    "description": "Aulas de yoga, meditação e bem-estar.",
+    "phone": "(71) 94444-5555",
+    "services": [
+      { "_id": "s16", "title": "Aula Hatha Yoga", "duration": 60, "price": 60 },
+      { "_id": "s17", "title": "Aula Vinyasa", "duration": 75, "price": 70 },
+      {
+        "_id": "s18",
+        "title": "Sessão de Meditação",
+        "duration": 45,
+        "price": 40
+      }
+    ]
+  },
+  {
+    "_id": "b7",
+    "name": "Pet Shop Patas Felizes",
+    "description": "Banho, tosa e cuidados com animais de estimação.",
+    "phone": "(71) 93333-6666",
+    "services": [
+      { "_id": "s19", "title": "Banho e Tosa", "duration": 90, "price": 100 },
+      { "_id": "s20", "title": "Tosa Higiênica", "duration": 60, "price": 60 },
+      {
+        "_id": "s21",
+        "title": "Limpeza de Ouvidos",
+        "duration": 30,
+        "price": 40
+      }
+    ]
+  },
+  {
+    "_id": "b8",
+    "name": "Consultório Psicológico",
+    "description": "Atendimento psicológico individual e terapia.",
+    "phone": "(71) 92222-7777",
+    "services": [
+      {
+        "_id": "s22",
+        "title": "Sessão Psicoterapia",
+        "duration": 50,
+        "price": 150
+      },
+      {
+        "_id": "s23",
+        "title": "Avaliação Psicológica",
+        "duration": 90,
+        "price": 250
+      },
+      { "_id": "s24", "title": "Terapia em Grupo", "duration": 60, "price": 80 }
+    ]
+  }
+]
