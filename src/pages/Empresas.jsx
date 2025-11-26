@@ -69,19 +69,19 @@ export default function Empresas() {
               key={b._id}
               className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden hover:scale-105 transform"
             >
-              {/* Header Card */}
+              {/* Header Card - sem overlay */}
               <div
-                className={`bg-gradient-to-r ${gradients[index]} h-20 sm:h-24`}
+                className={`bg-gradient-to-r ${gradients[index]} h-16 sm:h-20`}
               ></div>
 
               {/* Conteúdo */}
-              <div className="p-4 sm:p-5 -mt-8 sm:-mt-12 relative z-10">
-                {/* Empresa Info - Compacto */}
-                <div className="mb-3">
-                  <h3 className="text-base sm:text-lg font-bold text-white truncate">
+              <div className="p-4 sm:p-5 relative z-10">
+                {/* Empresa Info - com background próprio */}
+                <div className="bg-slate-50 rounded-lg p-3 sm:p-4 mb-4 border-l-4 border-slate-400">
+                  <h3 className="text-base sm:text-lg font-bold text-slate-800 truncate">
                     {b.name}
                   </h3>
-                  <p className="text-xs text-slate-200 mt-1">📞 {b.phone}</p>
+                  <p className="text-xs text-slate-600 mt-1">📞 {b.phone}</p>
                 </div>
 
                 {/* Serviços - Prioridade */}
