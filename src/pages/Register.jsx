@@ -4,18 +4,19 @@ import { useNotification } from "../context/NotificationContext";
 import { useNavigate } from "react-router-dom";
 
 export default function Cadastro() {
-  const { login } = useAuth();
+  const { register } = useAuth();
   const navigate = useNavigate();
-  const { success, error, info } = useNotification();
-  const [userType, setUserType] = useState("cliente"); // "cliente" ou "empresa"
+  const { success, error } = useNotification();
+  const [userType, setUserType] = useState("cliente");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [nome, setNome] = useState("");
   const [empresaNome, setEmpresaNome] = useState("");
   const [empresaTelefone, setEmpresaTelefone] = useState("");
   const [empresaDescricao, setEmpresaDescricao] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!email || !senha || !nome) {
@@ -28,37 +29,41 @@ export default function Cadastro() {
         error("Erro", "Preencha os dados da empresa!");
         return;
       }
+    }
 
-      // Simula criação de empresa
-      const novaEmpresa = {
-        _id: `b${Date.now()}`,
-        name: empresaNome,
-        description: empresaDescricao || "Serviços de qualidade",
-        phone: empresaTelefone,
-        services: [],
-      };
+    setLoading(true);
 
-      // Armazena a nova empresa
-      const empresas =
-        JSON.parse(localStorage.getItem("slotly_novas_empresas")) || [];
-      empresas.push(novaEmpresa);
-      localStorage.setItem("slotly_novas_empresas", JSON.stringify(empresas));
+    try {
+      const companyData =
+        userType === "empresa"
+          ? {
+              phone: empresaTelefone,
+              description: empresaDescricao || "Serviços de qualidade",
+            }
+          : null;
 
-      // Faz login como empresa
-      login(userType, nome);
-      success(
-        "Empresa criada",
-        `Bem-vindo ${empresaNome}! Sua empresa foi criada com sucesso.`
-      );
-      navigate("/minha-empresa");
-    } else {
-      // Cadastro como cliente
-      login(userType, nome);
-      success(
-        "Cadastro concluído",
-        `Bem-vindo ${nome}! Seu cadastro foi realizado com sucesso.`
-      );
-      navigate("/");
+      const result = await register(nome, email, senha, userType, companyData);
+
+      if (result.success) {
+        success(
+          "Cadastro concluído",
+          `Bem-vindo ${nome}! Seu cadastro foi realizado com sucesso.`
+        );
+
+        setTimeout(() => {
+          if (userType === "empresa") {
+            navigate("/minha-empresa");
+          } else {
+            navigate("/");
+          }
+        }, 500);
+      } else {
+        error("Erro", result.error);
+      }
+    } catch (err) {
+      error("Erro", "Erro ao registrar. Tente novamente.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -72,29 +77,30 @@ export default function Cadastro() {
           Crie sua conta em segundos
         </p>
 
-        {/* Seletor de Tipo de Usuário */}
         <div className="mb-6 flex gap-3 sm:gap-4">
           <button
             type="button"
             onClick={() => setUserType("cliente")}
+            disabled={loading}
             className={`flex-1 py-2 sm:py-3 rounded-lg font-semibold transition text-sm sm:text-base ${
               userType === "cliente"
                 ? "bg-gradient-to-r from-slate-600 to-slate-700 text-white"
                 : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-            }`}
+            } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
           >
-            👤 Cliente
+            Cliente
           </button>
           <button
             type="button"
             onClick={() => setUserType("empresa")}
+            disabled={loading}
             className={`flex-1 py-2 sm:py-3 rounded-lg font-semibold transition text-sm sm:text-base ${
               userType === "empresa"
                 ? "bg-gradient-to-r from-stone-600 to-stone-700 text-white"
                 : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-            }`}
+            } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
           >
-            🏢 Empresa
+            Empresa
           </button>
         </div>
 
@@ -109,7 +115,8 @@ export default function Cadastro() {
               placeholder={userType === "cliente" ? "João Silva" : "João Silva"}
               value={nome}
               onChange={(e) => setNome(e.target.value)}
-              className="w-full border border-slate-300 p-2 sm:p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 text-sm"
+              disabled={loading}
+              className="w-full border border-slate-300 p-2 sm:p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 text-sm disabled:bg-slate-100"
             />
           </div>
 
@@ -122,7 +129,8 @@ export default function Cadastro() {
               placeholder="seu@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-slate-300 p-2 sm:p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 text-sm"
+              disabled={loading}
+              className="w-full border border-slate-300 p-2 sm:p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 text-sm disabled:bg-slate-100"
             />
           </div>
 
@@ -135,7 +143,8 @@ export default function Cadastro() {
               placeholder="••••••••"
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
-              className="w-full border border-slate-300 p-2 sm:p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 text-sm"
+              disabled={loading}
+              className="w-full border border-slate-300 p-2 sm:p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 text-sm disabled:bg-slate-100"
             />
           </div>
 
@@ -157,7 +166,8 @@ export default function Cadastro() {
                   placeholder="Ex: Barbearia do João"
                   value={empresaNome}
                   onChange={(e) => setEmpresaNome(e.target.value)}
-                  className="w-full border border-slate-300 p-2 sm:p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400 text-sm"
+                  disabled={loading}
+                  className="w-full border border-slate-300 p-2 sm:p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400 text-sm disabled:bg-slate-100"
                 />
               </div>
 
@@ -170,7 +180,8 @@ export default function Cadastro() {
                   placeholder="(71) 99999-0000"
                   value={empresaTelefone}
                   onChange={(e) => setEmpresaTelefone(e.target.value)}
-                  className="w-full border border-slate-300 p-2 sm:p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400 text-sm"
+                  disabled={loading}
+                  className="w-full border border-slate-300 p-2 sm:p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400 text-sm disabled:bg-slate-100"
                 />
               </div>
 
@@ -182,8 +193,9 @@ export default function Cadastro() {
                   placeholder="Descreva seu negócio..."
                   value={empresaDescricao}
                   onChange={(e) => setEmpresaDescricao(e.target.value)}
+                  disabled={loading}
                   rows="3"
-                  className="w-full border border-slate-300 p-2 sm:p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400 resize-none text-sm"
+                  className="w-full border border-slate-300 p-2 sm:p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400 resize-none text-sm disabled:bg-slate-100"
                 />
               </div>
             </>
@@ -191,13 +203,18 @@ export default function Cadastro() {
 
           <button
             type="submit"
+            disabled={loading}
             className={`w-full py-2 sm:py-3 rounded-lg font-semibold text-white transition text-sm sm:text-base ${
               userType === "cliente"
                 ? "bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800"
                 : "bg-gradient-to-r from-stone-600 to-stone-700 hover:from-stone-700 hover:to-stone-800"
-            }`}
+            } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
           >
-            Criar Conta como {userType === "cliente" ? "Cliente" : "Empresa"}
+            {loading
+              ? "Criando conta..."
+              : `Criar Conta como ${
+                  userType === "cliente" ? "Cliente" : "Empresa"
+                }`}
           </button>
         </form>
 

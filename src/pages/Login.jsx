@@ -1,117 +1,91 @@
 import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useNotification } from "../context/NotificationContext";
-import { useNavigate } from "react-router-dom";
 
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const { success, error, info } = useNotification();
+  const { success, error: showError } = useNotification();
   const [email, setEmail] = useState("");
-  const [senha, setSenha] = useState("");
-  const [userType, setUserType] = useState("cliente"); // "cliente" ou "empresa"
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Simulação simples
-    if (email && senha) {
-      const name = email.split("@")[0]; // Usa o nome de usuário do email
-      login(userType, name);
-
-      // Redireciona conforme o tipo de usuário
-      if (userType === "empresa") {
-        navigate("/minha-empresa");
-      } else {
-        navigate("/");
-      }
-    } else {
-      const { error } = useNotification();
-      error("Erro", "Preencha todos os campos!");
+    setLoading(true);
+    try {
+      login({ email, password });
+      success("Login realizado", "Bem-vindo ao Slotly!");
+      setTimeout(() => navigate("/"), 500);
+    } catch (err) {
+      showError("Erro", err.message || "Erro ao efetuar login");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 px-4 sm:px-6">
-      <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-8 w-full sm:max-w-md">
-        <h2 className="text-2xl sm:text-3xl font-bold text-center mb-1 sm:mb-2 text-slate-700">
-          Bem-vindo ao Slotly
-        </h2>
-        <p className="text-center text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base">
-          Faça login para continuar
-        </p>
-
-        {/* Seletor de Tipo de Usuário */}
-        <div className="mb-6 flex gap-3 sm:gap-4">
-          <button
-            type="button"
-            onClick={() => setUserType("cliente")}
-            className={`flex-1 py-2 sm:py-3 rounded-lg font-semibold transition text-sm sm:text-base ${
-              userType === "cliente"
-                ? "bg-gradient-to-r from-slate-600 to-slate-700 text-white"
-                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-            }`}
-          >
-            👤 Cliente
-          </button>
-          <button
-            type="button"
-            onClick={() => setUserType("empresa")}
-            className={`flex-1 py-2 sm:py-3 rounded-lg font-semibold transition text-sm sm:text-base ${
-              userType === "empresa"
-                ? "bg-gradient-to-r from-stone-600 to-stone-700 text-white"
-                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-            }`}
-          >
-            🏢 Empresa
-          </button>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center px-4 sm:px-6 py-6 sm:py-0">
+      <div className="bg-white shadow-2xl rounded-2xl p-6 sm:p-8 w-full sm:max-w-md">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 text-center">
+            Entrar
+          </h1>
+          <p className="text-center text-gray-600 mt-2 text-sm sm:text-base">
+            Acesse sua conta Slotly
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
           <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-              E-mail
+            <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">
+              Email
             </label>
             <input
               type="email"
               placeholder="seu@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-slate-300 p-2 sm:p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 text-sm"
+              disabled={loading}
+              className="w-full border border-slate-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent text-sm transition disabled:bg-slate-100"
+              required
             />
           </div>
           <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+            <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">
               Senha
             </label>
             <input
               type="password"
-              placeholder="••••••••"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              className="w-full border border-slate-300 p-2 sm:p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 text-sm"
+              placeholder="Digite sua senha"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
+              className="w-full border border-slate-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent text-sm transition disabled:bg-slate-100"
+              required
             />
           </div>
           <button
             type="submit"
-            className={`w-full py-2 sm:py-3 rounded-lg font-semibold text-white transition text-sm sm:text-base ${
-              userType === "cliente"
-                ? "bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800"
-                : "bg-gradient-to-r from-stone-600 to-stone-700 hover:from-stone-700 hover:to-stone-800"
-            }`}
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white font-semibold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
           >
-            Entrar como {userType === "cliente" ? "Cliente" : "Empresa"}
+            {loading ? "Entrando..." : "Entrar"}
           </button>
         </form>
 
-        <p className="text-center text-gray-600 text-xs sm:text-sm mt-4 sm:mt-6">
-          Não tem conta?{" "}
-          <a
-            href="/cadastro"
-            className="text-slate-700 font-semibold hover:underline"
-          >
-            Crie uma agora
-          </a>
-        </p>
+        <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-slate-200">
+          <p className="text-center text-gray-600 text-xs sm:text-sm">
+            Ainda não tem conta?{" "}
+            <Link
+              to="/cadastro"
+              className="font-semibold text-slate-700 hover:text-slate-900 transition"
+            >
+              Cadastre-se
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

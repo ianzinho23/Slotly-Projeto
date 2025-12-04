@@ -1,51 +1,81 @@
-import React, { createContext, useState, useEffect, useContext } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const AuthContext = createContext();
 
-// Hook customizado para usar o contexto facilmente
-export const useAuth = () => useContext(AuthContext);
+export function useAuth() {
+  return useContext(AuthContext);
+}
 
-export const AuthProvider = ({ children }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userType, setUserType] = useState(null); // "cliente" ou "empresa"
-  const [userName, setUserName] = useState(null);
+export function AuthProvider({ children }) {
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
 
-  // Ao iniciar, verificar se já existe login salvo no localStorage
   useEffect(() => {
-    const loggedIn = localStorage.getItem("isLoggedIn") === "true";
-    const type = localStorage.getItem("userType");
-    const name = localStorage.getItem("userName");
-
-    setIsLoggedIn(loggedIn);
-    setUserType(type);
-    setUserName(name);
+    const raw = localStorage.getItem("slotly_user");
+    if (raw) {
+      try {
+        setUser(JSON.parse(raw));
+      } catch {
+        localStorage.removeItem("slotly_user");
+      }
+    }
   }, []);
 
-  const login = (type, name) => {
-    setIsLoggedIn(true);
-    setUserType(type); // "cliente" ou "empresa"
-    setUserName(name);
+  function persistUser(u) {
+    setUser(u);
+    localStorage.setItem("slotly_user", JSON.stringify(u));
+  }
 
-    localStorage.setItem("isLoggedIn", "true");
-    localStorage.setItem("userType", type);
-    localStorage.setItem("userName", name);
+  const login = ({ email, password }) => {
+    // Este projeto é um protótipo: permitimos qualquer credencial.
+    // Define o tipo com base no email (convenção do README) se não houver backend:
+    const role = email && email.includes("empresa") ? "empresa" : "cliente";
+    const u = {
+      id: Date.now(),
+      email,
+      role,
+      name: email.split("@")[0] || "Usuário",
+    };
+    persistUser(u);
+    return u;
   };
 
   const logout = () => {
-    setIsLoggedIn(false);
-    setUserType(null);
-    setUserName(null);
-
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("userType");
-    localStorage.removeItem("userName");
+    setUser(null);
+    localStorage.removeItem("slotly_user");
+    navigate("/");
   };
 
-  return (
-    <AuthContext.Provider
-      value={{ isLoggedIn, userType, userName, login, logout }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
-};
+  const register = ({ name, email, password, type = "cliente" }) => {
+    // Salva usuários de teste localmente (array)
+    const raw = localStorage.getItem("slotly_users");
+    const users = raw ? JSON.parse(raw) : [];
+    const exists = users.find((x) => x.email === email);
+    if (exists) {
+      throw new Error("Email já cadastrado");
+    }
+    const newUser = {
+      id: Date.now(),
+      name,
+      email,
+      password,
+      role: type,
+    };
+    users.push(newUser);
+    localStorage.setItem("slotly_users", JSON.stringify(users));
+    // Também loga o usuário automaticamente
+    persistUser({ id: newUser.id, name, email, role: type });
+    return newUser;
+  };
+
+  const value = {
+    user,
+    login,
+    logout,
+    register,
+    isAuthenticated: !!user,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}

@@ -1,218 +1,138 @@
-import React, { useState, useEffect } from "react";
-import { format, addMinutes, setHours, startOfDay, isBefore } from "date-fns";
+﻿import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useNotification } from "../context/NotificationContext";
-import { useNavigate } from "react-router-dom";
 
-/**
- * BookingModal simula um fluxo de agendamento:
- * - Permite escolher data (padrão amanhã)
- * - Gera slots entre 9:00 e 18:00 com passo de 30min
- * - Marca como agendado localmente (localStorage)
- */
-export default function BookingModal({ business, service, onClose }) {
-  const { isLoggedIn, userType } = useAuth();
-  const navigate = useNavigate();
-  const { success, error, info } = useNotification();
-  const [date, setDate] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 1);
-    return d;
-  });
-  const [slots, setSlots] = useState([]);
-  const [booked, setBooked] = useState(() => {
+const BookingModal = ({ isOpen, onClose, service, company }) => {
+  const { user, isAuthenticated } = useAuth();
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleBook = (e) => {
+    e.preventDefault();
+    if (!selectedDate || !selectedTime) {
+      alert("Selecione data e horário");
+      return;
+    }
+    if (!isAuthenticated) {
+      alert("Você precisa estar logado");
+      return;
+    }
+    setLoading(true);
     try {
-      return JSON.parse(localStorage.getItem("slotly_bookings")) || [];
-    } catch {
-      return [];
-    }
-  });
-
-  useEffect(() => {
-    computeSlots();
-  }, [date]);
-
-  function computeSlots() {
-    const dayStart = setHours(startOfDay(date), 9);
-    const dayEnd = setHours(startOfDay(date), 18);
-    const duration = service.duration;
-    const temp = [];
-    let current = dayStart;
-    while (isBefore(addMinutes(current, duration), addMinutes(dayEnd, 1))) {
-      temp.push({
-        start: new Date(current),
-        end: addMinutes(current, duration),
-      });
-      current = addMinutes(current, 30);
-    }
-    setSlots(temp);
-  }
-
-  function handleBook(slot) {
-    // Verifica se o usuário está logado como cliente
-    if (!isLoggedIn) {
-      info(
-        "Login necessário",
-        "Você precisa fazer login para agendar um serviço."
-      );
+      const booking = {
+        id: Date.now(),
+        serviceTitle: service.title,
+        businessName: company.name,
+        duration: service.duration,
+        price: service.price,
+        dateTime: `${selectedDate} ${selectedTime}`,
+        userId: user.id,
+      };
+      const raw = localStorage.getItem("slotly_bookings");
+      const bookings = raw ? JSON.parse(raw) : [];
+      bookings.push(booking);
+      localStorage.setItem("slotly_bookings", JSON.stringify(bookings));
+      alert("Reserva confirmada!");
+      setSelectedDate("");
+      setSelectedTime("");
       onClose();
-      navigate("/login");
-      return;
+    } catch (err) {
+      alert("Erro ao criar reserva: " + err.message);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    if (userType !== "cliente") {
-      error("Acesso negado", "Apenas clientes podem agendar serviços.");
-      return;
-    }
-
-    const entry = {
-      id: Date.now(),
-      businessId: business._id,
-      businessName: business.name,
-      serviceId: service._id,
-      serviceTitle: service.title,
-      dateTime: format(slot.start, "dd/MM/yyyy HH:mm"),
-    };
-    const next = [...booked, entry];
-    setBooked(next);
-    localStorage.setItem("slotly_bookings", JSON.stringify(next));
-    success(
-      "Agendamento confirmado",
-      `Agendamento confirmado para ${entry.dateTime}`
-    );
-    onClose();
-  }
-
-  if (!isLoggedIn) {
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg max-w-md w-full p-8 text-center">
-          <div className="text-5xl mb-4">🔒</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">
-            Login Necessário
-          </h2>
-          <p className="text-gray-600 mb-6">
-            Para agendar um serviço, você precisa estar logado como cliente.
-          </p>
-          <div className="flex gap-3">
-            <button
-              onClick={() => {
-                onClose();
-                navigate("/login");
-              }}
-              className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
-            >
-              Fazer Login
-            </button>
-            <button
-              onClick={onClose}
-              className="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-semibold hover:bg-gray-300 transition"
-            >
-              Cancelar
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (userType !== "cliente") {
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg max-w-md w-full p-8 text-center">
-          <div className="text-5xl mb-4">🏢</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">
-            Acesso Negado
-          </h2>
-          <p className="text-gray-600 mb-6">
-            Sua conta é do tipo Empresa. Apenas clientes podem agendar serviços.
-          </p>
-          <button
-            onClick={onClose}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
-          >
-            Fechar
-          </button>
-        </div>
-      </div>
-    );
-  }
+  if (!isOpen || !service || !company) return null;
+  const today = new Date().toISOString().split("T")[0];
+  const maxDate = new Date();
+  maxDate.setDate(maxDate.getDate() + 30);
+  const maxDateString = maxDate.toISOString().split("T")[0];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-3xl w-full p-6">
-        <div className="flex justify-between items-start">
-          <div>
-            <h2 className="text-xl font-bold">Agendar: {service.title}</h2>
-            <div className="text-sm text-gray-600">
-              {business.name} • {business.phone}
-            </div>
-          </div>
-          <button onClick={onClose} className="text-gray-500">
-            Fechar
-          </button>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-lg max-w-md w-full">
+        <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-4 rounded-t-lg">
+          <h2 className="text-xl font-bold">{service.title}</h2>
+          <p className="text-sm text-orange-100">{company.name}</p>
         </div>
-
-        <div className="mt-4 grid md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium">Escolha a data</label>
-            <input
-              type="date"
-              className="border rounded p-2 mt-1"
-              value={date.toISOString().slice(0, 10)}
-              onChange={(e) => setDate(new Date(e.target.value))}
-            />
-            <div className="mt-4">
-              <h4 className="font-medium mb-2">Horários disponíveis</h4>
-              <div className="grid grid-cols-3 gap-2">
-                {slots.map((s, i) => {
-                  const busy = booked.some(
-                    (b) => b.dateTime === format(s.start, "dd/MM/yyyy HH:mm")
-                  );
-                  const past = isBefore(s.start, new Date());
-                  return (
-                    <button
-                      key={i}
-                      disabled={busy || past}
-                      onClick={() => handleBook(s)}
-                      className={`p-2 rounded text-sm border ${
-                        busy
-                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                          : "hover:bg-primary/10"
-                      }`}
-                    >
-                      {format(s.start, "HH:mm")}
-                    </button>
-                  );
-                })}
-              </div>
+        <div className="p-6">
+          <div className="bg-gray-50 rounded-lg p-4 mb-6">
+            <div className="flex justify-between mb-2">
+              <span className="font-medium">Duração:</span>
+              <span>{service.duration} min</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-medium">Valor:</span>
+              <span className="text-orange-600 font-bold">
+                R$ {service.price.toFixed(2)}
+              </span>
             </div>
           </div>
-
-          <div>
-            <h4 className="font-medium">Detalhes do serviço</h4>
-            <p className="mt-2">{service.title}</p>
-            <p className="text-sm text-gray-600">
-              Duração: {service.duration} min
-            </p>
-            <p className="text-sm text-gray-600">Preço: R$ {service.price}</p>
-
-            <div className="mt-6">
-              <h5 className="font-medium">Seus agendamentos (simulado)</h5>
-              <ul className="mt-2 text-sm">
-                {booked.length === 0 && (
-                  <li className="text-gray-500">Nenhum agendamento salvo.</li>
-                )}
-                {booked.map((b) => (
-                  <li key={b.id}>
-                    {b.dateTime} • {b.serviceTitle}
-                  </li>
-                ))}
-              </ul>
+          <form onSubmit={handleBook} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Data *</label>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                min={today}
+                max={maxDateString}
+                disabled={loading}
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500"
+                required
+              />
             </div>
-          </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Horário *
+              </label>
+              <select
+                value={selectedTime}
+                onChange={(e) => setSelectedTime(e.target.value)}
+                disabled={loading}
+                className="w-full px-4 py-2 border rounded-lg"
+                required
+              >
+                <option value="">Selecione um horário</option>
+                <option value="09:00">09:00</option>
+                <option value="09:30">09:30</option>
+                <option value="10:00">10:00</option>
+                <option value="10:30">10:30</option>
+                <option value="11:00">11:00</option>
+                <option value="11:30">11:30</option>
+                <option value="14:00">14:00</option>
+                <option value="14:30">14:30</option>
+                <option value="15:00">15:00</option>
+                <option value="15:30">15:30</option>
+                <option value="16:00">16:00</option>
+                <option value="16:30">16:30</option>
+                <option value="17:00">17:00</option>
+                <option value="17:30">17:30</option>
+              </select>
+            </div>
+            <div className="flex gap-3 pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={loading}
+                className="flex-1 px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={loading || !selectedDate || !selectedTime}
+                className="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50"
+              >
+                {loading ? "Reservando..." : "Confirmar"}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default BookingModal;
